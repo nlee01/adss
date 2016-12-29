@@ -30,4 +30,5 @@ PLIST NOTES: The Program Arguments key takes an array of two strings: (1) the ap
 TROUBLESHOOTING: For the 'StandardOutPath' and 'StandardErrorPath' keys in the plist, change 'NLee' to your username. Then run 'tail -f /var/log/system.log' in the Terminal to try debugging (honestly not that useful though).
 
 LaunchControl Screenshot:
+
 ![alt tag](other/launchcontrol.png)

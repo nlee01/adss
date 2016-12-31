@@ -10,28 +10,37 @@ from string import Template
 ###############################################################################
 
 scope = ['https://spreadsheets.google.com/feeds']
+
+# relative location of the google developer service account credential (downloaded from google developer page)
 credentials = ServiceAccountCredentials.from_json_keyfile_name('setup_json/service_account_id.json', scope)
+
 gc = gspread.authorize(credentials)
 
+# UNIVERSAL SPREADSHEET 2017 linked by the key (unique identifier in the URL)
 universal = gc.open_by_key("18XWeVV0Mnsupg6b6tZ6hC6kr7a0LGueT_UpBIriWjNQ")
+# Pitching Analytics 2017 linked by the key
 analytics = gc.open_by_key("1sHl3wmBSU1DjS2WYY3e4WP41kbAJv33gdDt_sM3HHNk")
+# NOTE: start index is 3, as in the index of the first client management spreadsheet
 start_index = 3
+# initializing global data variables for later use
 final_json = []
 digest_json = []
 
+# function to take a date in string format and return a datetime object, and returns the current time on exception
 def parseDate(string):
 	try:
 		return datetime.strptime(string, '%m/%d/%Y')
 	except:
 		return datetime.now()
 	
-
+# function to create an email dictionary matching department members to their respective emails
 def create_email_dict(spreadsheet, sheet, arg3):
 	json_all = []
 	email_dict = {}
 	analytics_all = spreadsheet.worksheet(sheet).get_all_values()
 	for row in range(1, len(analytics_all)):
 		json_all.append(dict(zip(analytics_all[0], analytics_all[row])))
+	# arg3 is either "test" or "run", with "test" specifying to use a dummy email list for testing purposes
 	for item in json_all:
 		if arg3 == "test":
 			email_dict[item["Name"]] = item["Test Email"]
@@ -39,6 +48,8 @@ def create_email_dict(spreadsheet, sheet, arg3):
 			email_dict[item["Name"]] = item["Email"]
 	return email_dict
 
+# function to take an individual client management sheet and return a zipped dictionary, with each row becoming a 
+# separate item and each cell value mapped to the column definition
 def create_json_from_sheet(spreadsheet, sheet):
 	try:
 		sheet_data = spreadsheet.get_worksheet(sheet).get_all_values()
@@ -49,6 +60,8 @@ def create_json_from_sheet(spreadsheet, sheet):
 		new_json.append(dict(zip(sheet_data[0], sheet_data[row])))
 	return new_json
 
+# function to take a json (derived from the universal spreadsheet), a leniency amount (number of days with no contact),
+# and an email dictionary to return a json item with the name, email, and clients of an associate
 def create_attention_json(json, leniency, emails):
 	name = json[1]["Name"]
 	missing_json = []
@@ -65,7 +78,7 @@ def create_attention_json(json, leniency, emails):
 		return []
 	else:
 		return attention_json
-
+# function to take the pitching analytics sheets and return html email code for the daily digest
 def create_digest_json(json_all, json_managers, arg3):
 	text = "<table style='font-size:12px; text-align:center; margin:0px;' width='100%'><tr><th>Name</th><th>Total</th><th><5</th><th>5+</th><th> ? </th><th>SOLD</th><th>Revenue</th></tr>"
 	for associate in json_all:
@@ -78,6 +91,7 @@ def create_digest_json(json_all, json_managers, arg3):
 		
 	return digest_json
 
+# custom functions for coloring table cells
 def green(string):
 	return "<td style='background-color:#ADFFA8; text-align: center'>" + string + "</td>"
 def yellow(string):
@@ -136,12 +150,14 @@ def color_sold(string):
 ###############################################################################
 ###############################################################################
 
+# checks if cells are empty and returns "<empty>" if empty
 def check_empty(cell):
 	if cell == "":
 		return "<i>&#60;empty&#62;</i>"
 	else:
 		return cell
 
+# takes the past due clients and returns html email code for the reminder email
 def return_past_due(clients):
 	text = ""
 	for row in clients:
@@ -152,6 +168,8 @@ def return_past_due(clients):
 		last_contact = check_empty(row["Last Contact"])
 		text += "<strong>" + company + "</strong><ul><li type='square'>Contact: " + contact_name + " (" + contact_email + ", " + contact_phone + ")</li><li type='square'>Last Contacted: " + last_contact + "</li></ul><br>"
 	return text
+
+# takes the unlisted last contact clients and returns html email code for the reminder email
 def return_unlisted(clients):
 	if clients == []:
 		return "<br>"
@@ -162,6 +180,7 @@ def return_unlisted(clients):
 			text += "<li type='square'><strong>" + company + "</strong></li>"
 		return text + "</p><br>"
 
+# sends all reminder emails according to the json given
 def send_emails(json, server, fromaddr):
 	today = datetime.now().strftime('%m/%d/%y %H:%M:%S')
 	print "...sending emails..."
@@ -207,6 +226,7 @@ def send_emails(json, server, fromaddr):
 		server.sendmail(fromaddr, toaddr, text)
 		print "x"
 
+# sends the daily digest email to the managers only
 def send_digest(json, server, fromaddr):
 	today = datetime.now().strftime('%m/%d/%y %H:%M:%S')
 	print "...sending digest..."
@@ -250,6 +270,10 @@ def send_digest(json, server, fromaddr):
 		text = msg.as_string()
 		server.sendmail(fromaddr, toaddr, text)
 		print "#"
+
+###############################################################################
+###############################################################################
+###############################################################################
 
 def main(argv):
 	fromaddr = argv[0]

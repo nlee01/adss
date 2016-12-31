@@ -12,6 +12,10 @@
     <array>
         <string>/Users/NLee/virtualenvs/adss/bin/python</string>
         <string>/Users/NLee/Desktop/ADSS/main.py</string>
+        <string>[EMAIL ADDRESS]</string>
+        <string>[EMAIL PASSWORD]</string>
+        <string>all</string>
+        <string>run</string>
     </array>
     <key>WorkingDirectory</key>
         <string>/Users/NLee/Desktop/ADSS</string>

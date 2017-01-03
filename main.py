@@ -1,3 +1,4 @@
+print ">>> Don't forget to activate the [adss] venv. <<<"
 import gspread, pprint, json, smtplib, sys
 from datetime import datetime, date
 from oauth2client.service_account import ServiceAccountCredentials

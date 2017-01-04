@@ -23,9 +23,12 @@ universal = gc.open_by_key("18XWeVV0Mnsupg6b6tZ6hC6kr7a0LGueT_UpBIriWjNQ")
 analytics = gc.open_by_key("1sHl3wmBSU1DjS2WYY3e4WP41kbAJv33gdDt_sM3HHNk")
 # NOTE: start index is 3, as in the index of the first client management spreadsheet
 start_index = 3
+# month_goal is the target number of clients a given associate should have listed on his/her personal sheet
+month_goal = 20
 # initializing global data variables for later use
 final_json = []
 digest_json = []
+breakdown_json = []
 
 # function to take a date in string format and return a datetime object, and returns the current time on exception
 def parseDate(string):
@@ -79,6 +82,50 @@ def create_attention_json(json, leniency, emails):
 		return []
 	else:
 		return attention_json
+# function to take the pitching analytics sheets and return html email code for the personal breakdown
+def create_breakdown_json(json_all, arg3):
+	header = "<table style='margin:0px;' width='100%'><tr>"
+	for associate in json_all:
+		if int(associate["Companies"]) > 20:
+			total = int(associate["Companies"])
+		else:
+			total = month_goal
+		green_cell = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#ADFFA8'></td>"
+		green_cell_sold = "<td style='width:" + str(100/total) + "; height:20px; background-color:#0CFF00'></td>"
+		yellow_cell = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#FFEAA8'></td>"
+		red_cell = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#FFA8A8'></td>"
+		green_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#ADFFA8'></td>"
+		green_cell_sold_sm = "<td style='width:" + str(100/total) + "; height:4px; background-color:#0CFF00'></td>"
+		yellow_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#FFEAA8'></td>"
+		red_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#FFA8A8'></td>"
+		text = header
+		for item in range(0, int(associate["SOLD"])):
+			text += green_cell_sold
+			total += -1
+		for item in range(0, (int(associate["Companies"]) - int(associate["SOLD"]))):
+			text += green_cell
+			total += -1
+		for rest in range(0, total):
+			text += red_cell
+		text += "</tr><tr>"
+		for item in range(0, int(associate["SOLD"])):
+			text += green_cell_sold_sm
+		for item in range(0, int(associate["<5 Days"])):
+			text += green_cell_sm
+		for item in range(0, int(associate["5+ Days"])):
+			text += red_cell_sm
+		for item in range(0, int(associate["Missing"])):
+			text += red_cell_sm
+		for rest in range(0, total):
+			text += red_cell_sm
+		text += "</tr></table>"
+
+
+		if arg3 == "test":
+			breakdown_json.append([associate["Name"], associate["Test Email"], text])
+		else:
+			breakdown_json.append([associate["Name"], associate["Email"], text])
+	return breakdown_json
 # function to take the pitching analytics sheets and return html email code for the daily digest
 def create_digest_json(json_all, json_managers, arg3):
 	text = "<table style='font-size:12px; text-align:center; margin:0px;' width='100%'><tr><th>Name</th><th>Total</th><th><5</th><th>5+</th><th> ? </th><th>SOLD</th><th>Revenue</th></tr>"
@@ -89,7 +136,6 @@ def create_digest_json(json_all, json_managers, arg3):
 			digest_json.append([manager["Name"], manager["Test Email"], text + "</table>"])
 		else:
 			digest_json.append([manager["Name"], manager["Email"], text + "</table>"])
-		
 	return digest_json
 
 # custom functions for coloring table cells
@@ -160,15 +206,18 @@ def check_empty(cell):
 
 # takes the past due clients and returns html email code for the reminder email
 def return_past_due(clients):
-	text = ""
-	for row in clients:
-		company = check_empty(row["Company"])
-		contact_name = check_empty(row["Contact Name"])
-		contact_email = check_empty(row["Email"])
-		contact_phone = check_empty(row["Phone"])
-		last_contact = check_empty(row["Last Contact"])
-		text += "<strong>" + company + "</strong><ul><li type='square'>Contact: " + contact_name + " (" + contact_email + ", " + contact_phone + ")</li><li type='square'>Last Contacted: " + last_contact + "</li></ul><br>"
-	return text
+	if clients == []:
+		return ""
+	else:
+		text = "<h2 style='color:#A90000'>Past-Due Clients</h2>"
+		for row in clients:
+			company = check_empty(row["Company"])
+			contact_name = check_empty(row["Contact Name"])
+			contact_email = check_empty(row["Email"])
+			contact_phone = check_empty(row["Phone"])
+			last_contact = check_empty(row["Last Contact"])
+			text += "<strong>" + company + "</strong><ul><li type='square'>Contact: " + contact_name + " (" + contact_email + ", " + contact_phone + ")</li><li type='square'>Last Contacted: " + last_contact + "</li></ul><br>"
+		return text
 
 # takes the unlisted last contact clients and returns html email code for the reminder email
 def return_unlisted(clients):
@@ -182,15 +231,61 @@ def return_unlisted(clients):
 		return text + "</p><br>"
 
 # sends all reminder emails according to the json given
-def send_emails(json, server, fromaddr):
+def send_personal_breakdown(json, server, fromaddr):
 	today = datetime.now().strftime('%m/%d/%y %H:%M:%S')
-	print "...sending emails..."
+	print "...sending personal breakdowns..."
+	for associate in json:
+		toaddr = associate[1]
+		msg = MIMEMultipart()
+		msg['From'] = fromaddr
+		msg['To'] = toaddr
+		msg['Subject'] = "[ADSS PERFORMANCE BREAKDOWN ***BETA] %s" % today
+		breakdown = associate[2]
+		body = """
+		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+		<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title></title>
+		  <style type="text/css">
+		    #outlook a {padding:0;}
+		    body{width:100% !important; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; margin:0; padding:0;} /* force default font sizes */
+		    .ExternalClass {width:100%;} .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {line-height: 100%;} /* Hotmail */
+		    a:active, a:visited, a[href^="tel"], a[href^="sms"] { text-decoration: none; color: #000001 !important; pointer-events: auto; cursor: default;}
+		    table td {border-collapse: collapse;}
+		  </style>
+		</head>
+		<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="margin: 0px; padding: 0px; background-color: #FFFFFF;" bgcolor="#FFFFFF"><table bgcolor="#800000" width="100%" border="0" align="center" cellpadding="0" cellspacing="0"><tr><td><table width="100%" border="0" align="center" cellpadding="0" cellspacing="0"><tr><td valign="top" style="padding-top:4px; padding-bottom:4px; padding-left:4px; padding-right:4px;">
+		<table width="100%" border="0" cellpadding="35px" cellspacing="0" bgcolor="#FFFFFF">
+		  <tr>
+		    <h3>ADSS&#09;&#09;<span style="font-size:11px; color:gray;">| <span style='color:#800000'>FOR ASSOCIATES</span> ***BETA</span></h3>
+		    <table width="100%" height="2px" bgcolor="#800000"></table>
+		    <h3 style='color:#800000; text-align: center'>PERFORMANCE BREAKDOWN: <i>$name</i></h3>
+		    $breakdown
+		    <p style='font-size:10px; color:gray; text-align: center'>as evaluated on $today</p>
+		    <p style='text-align:center'><a style='font-size:9px' href='https://docs.google.com/spreadsheets/d/18XWeVV0Mnsupg6b6tZ6hC6kr7a0LGueT_UpBIriWjNQ' target='_blank'>UNIVERSAL SPREADSHEET</a> | <a style='font-size:9px' href='https://docs.google.com/spreadsheets/d/1sHl3wmBSU1DjS2WYY3e4WP41kbAJv33gdDt_sM3HHNk' target='_blank'>PITCHING ANALYTICS</a></p>
+		    <p style='text-align: center'><a href='https://docs.google.com/a/thecrimson.com/document/d/1V0VBJYNnKoZ0kn3pZD4GUgTqFF9MXuhBkjIPoptS-ao/edit?usp=sharing' style='font-size:8px; color:gray;'><i>what's this?</i></a><p>
+		    <table width="100%" height="2px" bgcolor="#800000"></table>
+		    <br>
+		    <span style="font-size:9px; color:gray;">[This message was sent by the Advertising Department Spreadsheet System. Let me know if this email was sent incorrectly.&#09;&#09;- Nathan]</span></p>
+		  </tr>
+		</table>
+
+		</td></tr></table></td></tr></table></body></html>
+		"""
+		html = Template(body).substitute(name = associate[0], today = today, breakdown = breakdown)
+		msg.attach(MIMEText(html, 'html'))
+		text = msg.as_string()
+		server.sendmail(fromaddr, toaddr, text)
+		print "#"
+
+# sends all reminder emails according to the json given
+def send_reminders(json, server, fromaddr):
+	today = datetime.now().strftime('%m/%d/%y %H:%M:%S')
+	print "...sending reminders..."
 	for item in json:
 		toaddr = item[1]
 		msg = MIMEMultipart()
 		msg['From'] = fromaddr
 		msg['To'] = toaddr
-		msg['Subject'] = "[ADSS ***BETA] %s" % today
+		msg['Subject'] = "[ADSS REMINDER ***BETA] %s" % today
 		past_due_clients = return_past_due(item[2])
 		unlisted_clients = return_unlisted(item[3])
 		body = """
@@ -210,8 +305,7 @@ def send_emails(json, server, fromaddr):
 		    <h3>ADSS&#09;&#09;<span style="font-size:11px; color:gray;">| <span style='color:#800000'>FOR ASSOCIATES</span> ***BETA</span></h3>
 		    <table width="100%" height="2px" bgcolor="#A90000"></table>
 		    <p>Hey $name, here are clients for you to bump up and contact/recontact. Don't forget to <a href='https://docs.google.com/spreadsheets/d/18XWeVV0Mnsupg6b6tZ6hC6kr7a0LGueT_UpBIriWjNQ' target='_blank'>update the spreadsheet after</a>!
-		    <h2 style="color:#A90000">Past-Due Clients</h2>
-		    <p>$past_due_clients</p>
+		    $past_due_clients
 		    $unlisted_clients
 		    <table width="100%" height="2px" bgcolor="#A90000"></table>
 		    <br>
@@ -295,22 +389,25 @@ def main(argv):
 	print "...logging in..."
 	server.login(fromaddr, ep)
 	if argv[2] == "remind":
-		send_emails(final_json, server, fromaddr)
+		send_reminders(final_json, server, fromaddr)
 	elif argv[2] == "digest":
 		send_digest(create_digest_json(create_json_from_sheet(analytics, "ALL"), create_json_from_sheet(analytics, "Managers"), test_or_run), server, fromaddr)
+	elif argv[2] == "breakdown":
+		send_personal_breakdown(create_breakdown_json(create_json_from_sheet(analytics, "ALL"), test_or_run), server, fromaddr)
 	elif argv[2] == "all":
-		send_emails(final_json, server, fromaddr)
+		send_reminders(final_json, server, fromaddr)
 		send_digest(create_digest_json(create_json_from_sheet(analytics, "ALL"), create_json_from_sheet(analytics, "Managers"), test_or_run), server, fromaddr)
+		send_personal_breakdown(create_breakdown_json(create_json_from_sheet(analytics, "ALL"), test_or_run), server, fromaddr)
 	else:
 		print "invalid argv[2] provided. no emails sent."
 	server.quit()
 	print "...done."
 
 if __name__ == "__main__":
-	# main(sys.argv[1:])
-	try:
-		main(sys.argv[1:])
-	except:
-		print ">>> script failed to execute. did you pass the right console arguments?"
-		print ">>> usage: python main.py [your email] [your email password] [remind/digest/all] [test/run]"
-		print ">>> exiting..."
+	main(sys.argv[1:])
+	# try:
+	# 	main(sys.argv[1:])
+	# except:
+	# 	print ">>> script failed to execute. did you pass the right console arguments?"
+	# 	print ">>> usage: python main.py [your email] [your email password] [remind/digest/all] [test/run]"
+	# 	print ">>> exiting..."

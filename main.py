@@ -202,7 +202,8 @@ def check_empty(cell):
 	if cell == "":
 		return "<i>&#60;empty&#62;</i>"
 	else:
-		return cell
+		# str.encord('utf-8') protects against unicode type errors (/u2018 and /u2019 in particular)
+		return cell.encode('utf-8')
 
 # takes the past due clients and returns html email code for the reminder email
 def return_past_due(clients):
@@ -281,6 +282,7 @@ def send_reminders(json, server, fromaddr):
 	today = datetime.now().strftime('%m/%d/%y %H:%M:%S')
 	print "...sending reminders..."
 	for item in json:
+		print item[0]
 		toaddr = item[1]
 		msg = MIMEMultipart()
 		msg['From'] = fromaddr

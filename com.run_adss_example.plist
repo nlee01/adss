@@ -12,20 +12,56 @@
     <array>
         <string>/Users/NLee/virtualenvs/adss/bin/python</string>
         <string>/Users/NLee/Desktop/ADSS/main.py</string>
-        <string>[EMAIL ADDRESS]</string>
-        <string>[EMAIL PASSWORD]</string>
+        <string>[EMAIL]</string>
+        <string>[PASSWORD]</string>
         <string>all</string>
         <string>run</string>
     </array>
     <key>WorkingDirectory</key>
         <string>/Users/NLee/Desktop/ADSS</string>
     <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>7</integer>
-        <key>Minute</key>
-        <integer>07</integer>
-    </dict>
+        <array>
+            <dict>
+                <key>Weekday</key>
+                <integer>1</integer>
+                <key>Hour</key>
+                <integer>7</integer>
+                <key>Minute</key>
+                <integer>07</integer>
+            </dict>
+            <dict>
+                <key>Weekday</key>
+                <integer>2</integer>
+                <key>Hour</key>
+                <integer>7</integer>
+                <key>Minute</key>
+                <integer>07</integer>
+            </dict>
+            <dict>
+                <key>Weekday</key>
+                <integer>3</integer>
+                <key>Hour</key>
+                <integer>7</integer>
+                <key>Minute</key>
+                <integer>07</integer>
+            </dict>
+            <dict>
+                <key>Weekday</key>
+                <integer>4</integer>
+                <key>Hour</key>
+                <integer>7</integer>
+                <key>Minute</key>
+                <integer>07</integer>
+            </dict>
+            <dict>
+                <key>Weekday</key>
+                <integer>5</integer>
+                <key>Hour</key>
+                <integer>7</integer>
+                <key>Minute</key>
+                <integer>07</integer>
+            </dict>
+        </array>
     <key>KeepAlive</key>
     <false/>
     <key>StandardOutPath</key>

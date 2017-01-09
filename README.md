@@ -11,7 +11,7 @@ For general manual script execution, navigate to the directory containing main.p
 For detailed specifications, refer to:
 - Reminder SPEC: http://bit.ly/2iwWttU
 - Digest SPEC: http://bit.ly/2j6A1c9
-- Breakdown SPEC: http://bit.ly/2hPZxAA
+- Performance Breakdown SPEC: http://bit.ly/2hPZxAA
 
 Google Spreadsheets
 --------------------------------------------
@@ -43,6 +43,17 @@ PLIST NOTES: The Program Arguments key takes an array of strings: (1) the approp
 
 TROUBLESHOOTING: For the 'StandardOutPath' and 'StandardErrorPath' keys in the plist, change 'NLee' to your username. Then run 'tail -f /var/log/system.log' in the Terminal to try debugging (honestly not that useful though).
 
-LaunchControl Screenshot:
 
-![alt tag](other/launchcontrol.png)
+EXAMPLES:
+--------------------------------------------
+Reminder Email:
+
+![alt tag](other/reminder.png)
+
+Digest Email:
+
+![alt tag](other/digest.png)
+
+Performance Breakdown Email:
+
+![alt tag](other/breakdown.png)

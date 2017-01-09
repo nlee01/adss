@@ -70,4 +70,4 @@ Pitching Analytics Spreadsheet, Main Sheet Example:
 
 Pitching Analytics Spreadsheet, Manager Tab Example:
 
-![alt tag](other/analytics_managers.png =200x)
+![alt tag](other/analytics_managers.png)

@@ -44,7 +44,7 @@ PLIST NOTES: The Program Arguments key takes an array of strings: (1) the approp
 TROUBLESHOOTING: For the 'StandardOutPath' and 'StandardErrorPath' keys in the plist, change 'NLee' to your username. Then run 'tail -f /var/log/system.log' in the Terminal to try debugging (honestly not that useful though).
 
 
-EXAMPLES:
+EXAMPLE EMAILS:
 --------------------------------------------
 Reminder Email:
 
@@ -57,3 +57,17 @@ Digest Email:
 Performance Breakdown Email:
 
 ![alt tag](other/breakdown.png)
+
+SPREADSHEET FORMATTING:
+--------------------------------------------
+Universal Spreadsheet, Individual Sheet Example:
+
+![alt tag](other/universal.png)
+
+Pitching Analytics Spreadsheet, Main Sheet Example:
+
+![alt tag](other/analytics_main.png)
+
+Pitching Analytics Spreadsheet, Manager Tab Example:
+
+![alt tag](other/analytics_managers.png)

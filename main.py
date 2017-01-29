@@ -22,7 +22,7 @@ universal = gc.open_by_key("18XWeVV0Mnsupg6b6tZ6hC6kr7a0LGueT_UpBIriWjNQ")
 # Pitching Analytics 2017 linked by the key
 analytics = gc.open_by_key("1sHl3wmBSU1DjS2WYY3e4WP41kbAJv33gdDt_sM3HHNk")
 # NOTE: start index is 3, as in the index of the first client management spreadsheet
-start_index = 3
+start_index = 4
 # month_goal is the target number of clients a given associate should have listed on his/her personal sheet
 month_goal = 20
 # initializing global data variables for later use
@@ -70,14 +70,17 @@ def create_attention_json(json, leniency, emails):
 	name = json[1]["Name"]
 	missing_json = []
 	past_due_json = []
+	hold_json = []
 	for row in json:
 		if row["Last Contact"] == "":
 			if row["Company"] != "":
 				missing_json.append(row)
 		elif (datetime.now() - parseDate(row["Last Contact"])).days > leniency:
-			if row["Status"] != "SOLD":
+			if (row["Status"] != "SOLD") and (row["Status"] != "HOLD") and (row["Status"] != "hold"):
 				past_due_json.append(row)
-	attention_json = [name, emails[name], past_due_json, missing_json]
+			if (row["Status"] == "HOLD") or (row["Status"] == "hold"):
+				hold_json.append(row)
+	attention_json = [name, emails[name], past_due_json, missing_json, hold_json]
 	if attention_json[2] == [] and attention_json[3] == []:
 		return []
 	else:
@@ -91,13 +94,14 @@ def create_breakdown_json(json_all, arg3):
 		else:
 			total = month_goal
 		green_cell = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#ADFFA8'></td>"
-		green_cell_sold = "<td style='width:" + str(100/total) + "; height:20px; background-color:#0CFF00'></td>"
+		green_cell_sold = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#0CFF00'></td>"
 		yellow_cell = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#FFEAA8'></td>"
 		red_cell = "<td style='width:" + str(100/total) + "%; height:20px; background-color:#FFA8A8'></td>"
 		green_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#ADFFA8'></td>"
-		green_cell_sold_sm = "<td style='width:" + str(100/total) + "; height:4px; background-color:#0CFF00'></td>"
+		green_cell_sold_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#0CFF00'></td>"
 		yellow_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#FFEAA8'></td>"
 		red_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#FFA8A8'></td>"
+		purple_cell_sm = "<td style='width:" + str(100/total) + "%; height:4px; background-color:#F000FF'></td>"
 		text = header
 		for item in range(0, int(associate["SOLD"])):
 			text += green_cell_sold
@@ -110,6 +114,8 @@ def create_breakdown_json(json_all, arg3):
 		text += "</tr><tr>"
 		for item in range(0, int(associate["SOLD"])):
 			text += green_cell_sold_sm
+		for item in range(0, int(associate["HOLD"])):
+			text += purple_cell_sm
 		for item in range(0, int(associate["<5 Days"])):
 			text += green_cell_sm
 		for item in range(0, int(associate["5+ Days"])):
@@ -128,9 +134,9 @@ def create_breakdown_json(json_all, arg3):
 	return breakdown_json
 # function to take the pitching analytics sheets and return html email code for the daily digest
 def create_digest_json(json_all, json_managers, arg3):
-	text = "<table style='font-size:12px; text-align:center; margin:0px;' width='100%'><tr><th>Name</th><th>Total</th><th><5</th><th>5+</th><th> ? </th><th>SOLD</th><th>Revenue</th></tr>"
+	text = "<table style='font-size:12px; text-align:center; margin:0px;' width='100%'><tr><th>Name</th><th>Total</th><th><5</th><th>5+</th><th>||</th><th> ? </th><th>SOLD</th><th>Revenue</th></tr>"
 	for associate in json_all:
-		text += "<tr><td>" + associate["Name"] + "</td>" + color_total(associate["Companies"]) + color_less_5(associate["<5 Days"]) + color_greater_5(associate["5+ Days"]) + color_unknown(associate["Missing"]) + color_sold(associate["SOLD"]) + "<td><i>" + associate["Sold Revenue"] + "</i></td></tr>"
+		text += "<tr><td>" + associate["Name"] + "</td>" + color_total(associate["Companies"]) + color_less_5(associate["<5 Days"]) + color_greater_5(associate["5+ Days"]) + color_hold(associate["HOLD"]) + color_unknown(associate["Missing"]) + color_sold(associate["SOLD"]) + "<td><i>" + associate["Sold Revenue"] + "</i></td></tr>"
 	for manager in json_managers:
 		if arg3 == "test":
 			digest_json.append([manager["Name"], manager["Test Email"], text + "</table>"])
@@ -145,6 +151,8 @@ def yellow(string):
 	return "<td style='background-color:#FFEAA8; text-align: center'>" + string + "</td>"
 def red(string):
 	return "<td style='background-color:#FFA8A8; text-align: center'>" + string + "</td>"
+def purple(string):
+	return "<td style='background-color:#F887FF; text-align: center'>" + string + "</td>"
 def none(string):
 	return "<td style='text-align: center'>" + string + "</td>"
 
@@ -174,6 +182,16 @@ def color_greater_5(string):
 			return yellow(string)
 		else:
 			return green(string)
+	except:
+		return none(string)
+def color_hold(string):
+	try:
+		if int(string) > 8:
+			return red(string)
+		elif int(string) > 0:
+			return purple(string)
+		else:
+			return none(string)
 	except:
 		return none(string)
 def color_unknown(string):
